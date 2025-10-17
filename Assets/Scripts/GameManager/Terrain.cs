@@ -21,7 +21,7 @@ public class Terrain : MonoBehaviour
     {
         public int numberOfPoints = 50;        // Số điểm tạo terrain
         public int distanceBetweenPoints = 10;  // Khoảng cách giữa các điểm
-        public float pointMinHeight = 5f;       // Độ cao tối thiểu
+        public float pointMinHeight = 3f;       // Độ cao tối thiểu
         public float pointMaxHeight = 20f;      // Độ cao tối đa
         public int pointIndex = 2;              // Bắt đầu từ điểm thứ mấy
         public float tangentMinWidth = 1f;      // Độ rộng tối thiểu của tangent
