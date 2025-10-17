@@ -155,6 +155,7 @@ public class UIManager : Singleton<UIManager>
                            "Cách chơi:\n" +
                            "- Sử dụng phím mũi tên hoặc A/D để di chuyển.\n" +
                            "- Thu thập sao để tăng điểm số (hiển thị trên màn hình).\n" +
+                           "- Nhặt powerup tăng tốc và bất tử để tăng khả năng qua màn." +
                            "- Tránh va chạm với mặt đất để không thua!\n" +
                            "- Hoàn thành cấp độ để mở khóa cấp độ tiếp theo.\n" +
                            "Cài đặt: Vào menu Setting để điều chỉnh âm thanh và nhạc nền.\n" +

@@ -7,6 +7,11 @@ public class Terrain : MonoBehaviour
 {
     [SerializeField] private GameObject finishLine;
     [SerializeField] private GameObject starPrefabs;
+
+    // THÊM: Prefabs cho Power-up
+    [SerializeField] private GameObject speedBoostPrefab;
+    [SerializeField] private GameObject invincibilityPrefab;
+
     [SerializeField] private List<GameObject> environmentElementsList = new List<GameObject>();
     [SerializeField] private List<GameObject> cloudsList = new List<GameObject>();
 
@@ -29,17 +34,19 @@ public class Terrain : MonoBehaviour
         public int cloudMaxHeight = 16;         // Độ cao tối đa của đám mây
         public float rampChance = 0.2f;         // Xác suất tạo ramp
         public float obstacleDensity = 0.6f;    // Mật độ chướng ngại vật (0-1)
-        public float snowflakeChance = 0.7f;    // Xác suất spawn sao
+        public float collectibleChance = 0.7f;  // ĐỔI TÊN: Thành xác suất chung cho tất cả vật phẩm thu thập
+        public float powerUpRatio = 0.3f;       // THÊM: Tỷ lệ Power-up so với tổng số vật phẩm thu thập (0.3 = 30%)
     }
 
     [SerializeField]
     private List<LevelConfig> levelConfigs = new List<LevelConfig>
     {
-        new LevelConfig { numberOfPoints = 30, distanceBetweenPoints = 12, pointMaxHeight = 12f, rampChance = 0.1f, obstacleDensity = 0.5f, snowflakeChance = 0.6f }, // Level 1
-        new LevelConfig { numberOfPoints = 35, distanceBetweenPoints = 11, pointMaxHeight = 14f, rampChance = 0.12f, obstacleDensity = 0.55f, snowflakeChance = 0.65f }, // Level 2
-        new LevelConfig { numberOfPoints = 40, distanceBetweenPoints = 10, pointMaxHeight = 16f, rampChance = 0.14f, obstacleDensity = 0.6f, snowflakeChance = 0.7f }, // Level 3
-        new LevelConfig { numberOfPoints = 45, distanceBetweenPoints = 10, pointMaxHeight = 18f, rampChance = 0.16f, obstacleDensity = 0.65f, snowflakeChance = 0.75f }, // Level 4
-        new LevelConfig { numberOfPoints = 50, distanceBetweenPoints = 10, pointMaxHeight = 20f, rampChance = 0.18f, obstacleDensity = 0.7f, snowflakeChance = 0.8f } // Level 5
+        // THAY ĐỔI: snowflakeChance thành collectibleChance, thêm powerUpRatio
+        new LevelConfig { numberOfPoints = 30, distanceBetweenPoints = 12, pointMaxHeight = 12f, rampChance = 0.1f, obstacleDensity = 0.5f, collectibleChance = 0.6f, powerUpRatio = 0.2f }, // Level 1
+        new LevelConfig { numberOfPoints = 35, distanceBetweenPoints = 11, pointMaxHeight = 14f, rampChance = 0.12f, obstacleDensity = 0.55f, collectibleChance = 0.65f, powerUpRatio = 0.25f }, // Level 2
+        new LevelConfig { numberOfPoints = 40, distanceBetweenPoints = 10, pointMaxHeight = 16f, rampChance = 0.14f, obstacleDensity = 0.6f, collectibleChance = 0.7f, powerUpRatio = 0.3f }, // Level 3
+        new LevelConfig { numberOfPoints = 45, distanceBetweenPoints = 10, pointMaxHeight = 18f, rampChance = 0.16f, obstacleDensity = 0.65f, collectibleChance = 0.75f, powerUpRatio = 0.35f }, // Level 4
+        new LevelConfig { numberOfPoints = 50, distanceBetweenPoints = 10, pointMaxHeight = 20f, rampChance = 0.18f, obstacleDensity = 0.7f, collectibleChance = 0.8f, powerUpRatio = 0.4f } // Level 5
     };
 
     private SpriteShapeController shape;
@@ -54,8 +61,7 @@ public class Terrain : MonoBehaviour
             return;
         }
 
-        // Lấy currentLevelIndex từ SceneManager (giả sử tên scene là "LevelX")
-        currentLevelIndex = SceneManager.GetActiveScene().buildIndex - 1; // Giả sử Level1 có index 1
+        currentLevelIndex = SceneManager.GetActiveScene().buildIndex - 1;
         if (currentLevelIndex < 0 || currentLevelIndex >= levelConfigs.Count)
         {
             Debug.LogWarning("Invalid level index, using default config (Level 1).");
@@ -67,16 +73,20 @@ public class Terrain : MonoBehaviour
         {
             float xPosition = i * config.distanceBetweenPoints;
             float yPosition = Random.Range(config.pointMinHeight, config.pointMaxHeight);
+
+            // Logic tạo ramp (giữ nguyên)
             if (Random.value < config.rampChance && i < config.numberOfPoints - 5)
             {
-                yPosition += 5f * (i / 10f); // Tăng độ cao nhẹ cho ramp
+                yPosition += 5f * (i / 10f);
                 shape.spline.SetHeight(i, Random.Range(config.minSplineHeight * 1.2f, config.maxSplineHeight * 1.2f));
             }
+
             shape.spline.InsertPointAt(i, new Vector3(xPosition, yPosition, 0));
             shape.spline.SetTangentMode(i, ShapeTangentMode.Continuous);
             shape.spline.SetLeftTangent(i, new Vector3(-Random.Range(config.tangentMinWidth, config.tangentMaxWidth), 0, 0));
             shape.spline.SetRightTangent(i, new Vector3(Random.Range(config.tangentMinWidth, config.tangentMaxWidth), 0, 0));
             shape.spline.SetHeight(i, Random.Range(config.minSplineHeight, config.maxSplineHeight));
+
             if (i == config.numberOfPoints - 1)
             {
                 finishLine.transform.position = new Vector3(xPosition, yPosition + config.pointIndex, 0);
@@ -85,14 +95,15 @@ public class Terrain : MonoBehaviour
             {
                 SetRandomEnvironmentObject(xPosition, yPosition, config.obstacleDensity);
                 SetRandomCloud(xPosition, yPosition, config.cloudMinSize, config.cloudMaxSize, config.cloudMinHeight, config.cloudMaxHeight);
-                SetRandomSnowflake(xPosition, yPosition, config.snowflakeChance);
+                // ĐỔI TÊN: Gọi phương thức chung để spawn vật phẩm thu thập
+                SetRandomCollectible(xPosition, yPosition, config.collectibleChance, config.powerUpRatio);
             }
         }
     }
 
     private void SetRandomEnvironmentObject(float xPosition, float yPosition, float obstacleDensity)
     {
-        if (Random.value > obstacleDensity - (currentLevelIndex * 0.05f)) // Giảm mật độ chướng ngại theo level
+        if (Random.value > obstacleDensity - (currentLevelIndex * 0.05f))
         {
             GameObject environmentElement = environmentElementsList[Random.Range(0, environmentElementsList.Count)];
             if (environmentElement.CompareTag("Tree"))
@@ -115,11 +126,51 @@ public class Terrain : MonoBehaviour
         Instantiate(randomCloud, new Vector3(xPosition, yPosition + randomHeight, 0), Quaternion.identity);
     }
 
-    private void SetRandomSnowflake(float xPosition, float yPosition, float snowflakeChance)
+    // ĐỔI TÊN: Phương thức cũ SetRandomSnowflake được thay bằng phương thức chung
+    private void SetRandomCollectible(float xPosition, float yPosition, float collectibleChance, float powerUpRatio)
     {
-        if (Random.value > snowflakeChance - (currentLevelIndex * 0.05f)) // Tăng xác suất sao theo level
+        // 1. Kiểm tra tổng xác suất spawn vật phẩm thu thập (Star hoặc Power-up)
+        if (Random.value > collectibleChance - (currentLevelIndex * 0.05f))
         {
-            Instantiate(starPrefabs, new Vector3(xPosition, yPosition + 2f, 0), Quaternion.identity);
+            GameObject prefabToSpawn;
+
+            // 2. Kiểm tra xem vật phẩm là Power-up hay Star
+            if (Random.value < powerUpRatio)
+            {
+                // Là Power-up: Chọn ngẫu nhiên giữa SpeedBoost và Invincibility
+                if (Random.value < 0.5f)
+                {
+                    prefabToSpawn = speedBoostPrefab;
+                }
+                else
+                {
+                    prefabToSpawn = invincibilityPrefab;
+                }
+
+                // Kiểm tra xem đã gán prefab Power-up chưa
+                if (prefabToSpawn == null)
+                {
+                    Debug.LogWarning("PowerUp Prefab is missing, falling back to Star.");
+                    prefabToSpawn = starPrefabs;
+                }
+            }
+            else
+            {
+                // Là Star
+                prefabToSpawn = starPrefabs;
+            }
+
+            // 3. Tạo vật phẩm
+            if (prefabToSpawn != null)
+            {
+                // Spawn vật phẩm cao hơn địa hình 2f
+                Instantiate(prefabToSpawn, new Vector3(xPosition, yPosition + 2f, 0), Quaternion.identity);
+            }
+            else
+            {
+                // Trường hợp starPrefabs bị null
+                Debug.LogError("Collectible prefab (Star/PowerUp) is null!");
+            }
         }
     }
 }
