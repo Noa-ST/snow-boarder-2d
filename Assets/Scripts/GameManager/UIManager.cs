@@ -175,4 +175,9 @@ public class UIManager : Singleton<UIManager>
             AudioController.Ins.PlayButtonClickSound();
         }
     }
+
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
 }

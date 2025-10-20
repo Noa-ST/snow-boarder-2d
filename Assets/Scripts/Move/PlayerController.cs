@@ -19,6 +19,12 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private bool canMove = true;
 
+    public bool IsInvincible
+    {
+        get { return isInvincible; }
+    }
+
+
     public float CurrentSpeed
     {
         get
